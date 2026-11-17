@@ -64,16 +64,30 @@ fun MapaUbicacion(
         modifier = modifier,
         update = { vista ->
             vista.overlays.clear()
+
+            lugares.forEach { item ->
+                val lugar = item.lugar
+                val marcadorLugar = Marker(vista).apply {
+                    position = GeoPoint(lugar.latitud, lugar.longitud)
+                    title = lugar.nombre
+                    snippet = lugar.categoria
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    icon = icon.mutate().apply { setTint(Color.rgb(30, 136, 229)) }
+                }
+                vista.overlays.add(marcadorLugar)
+            }
+
             if (estado is UbicacionUi.Lista) {
-                val marcador = Marker(vista).apply {
+                val marcadorPropio = Marker(vista).apply {
                     position = GeoPoint(estado.posicion.latitud, estado.posicion.longitud)
                     title = "Estás aquí"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     icon = icon.mutate().apply { setTint(Color.RED) }
                 }
-                vista.overlays.add(marcador)
-                marcador.showInfoWindow()
+                vista.overlays.add(marcadorPropio)
+                marcadorPropio.showInfoWindow()
             }
+
             vista.invalidate()
         },
         onRelease = { it.onDetach() }
