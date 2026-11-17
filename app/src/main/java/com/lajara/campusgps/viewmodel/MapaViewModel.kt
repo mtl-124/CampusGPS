@@ -8,6 +8,7 @@ import com.lajara.campusgps.data.UbicacionRepository
 import com.lajara.campusgps.model.Lugar
 import com.lajara.campusgps.model.LugarConDistancia
 import com.lajara.campusgps.model.Posicion
+import com.lajara.campusgps.model.TipoError
 import com.lajara.campusgps.model.UbicacionUi
 import com.lajara.campusgps.util.distanciaMetros
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +40,13 @@ class MapaViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun buscar() {
+        if (!ubicacionRepo.playServicesDisponible()) {
+            _estado.value = UbicacionUi.Error(
+                "Este dispositivo no tiene Google Play Services",
+                TipoError.SIN_PLAY_SERVICES
+            )
+            return
+        }
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
             ubicacionRepo.obtenerPosicion()
@@ -46,12 +54,15 @@ class MapaViewModel(
                     _estado.value = UbicacionUi.Lista(it)
                     actualizarDistancias(it)
                 }
-                .onFailure { _estado.value = UbicacionUi.Error(mensajeDe(it)) }
+                .onFailure { _estado.value = errorDe(it) }
         }
     }
 
     fun permisoDenegado() {
-        _estado.value = UbicacionUi.Error("Sin permiso de ubicación no puedo mostrar dónde estás")
+        _estado.value = UbicacionUi.Error(
+            "Sin permiso de ubicación no puedo mostrar dónde estás",
+            TipoError.SIN_PERMISO
+        )
     }
 
     fun seleccionar(id: Int?) {
@@ -65,8 +76,14 @@ class MapaViewModel(
         _lugares.value.forEach { Log.d("CampusGPS", "${it.lugar.nombre}: ${it.metros} m") }
     }
 
-    private fun mensajeDe(e: Throwable): String = when (e) {
-        is SecurityException -> "Falta el permiso de ubicación"
-        else -> e.message ?: "No se pudo obtener la ubicación"
+    private fun errorDe(e: Throwable): UbicacionUi.Error = when (e) {
+        is SecurityException -> UbicacionUi.Error(
+            "Falta el permiso de ubicación",
+            TipoError.SIN_PERMISO
+        )
+        else -> UbicacionUi.Error(
+            "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
+            TipoError.GPS_APAGADO
+        )
     }
 }

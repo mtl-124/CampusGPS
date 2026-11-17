@@ -148,19 +148,8 @@ fun PantallaMapa(
                         }
                     }
 
-                    if (estado is UbicacionUi.Error) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(
-                                text = (estado as UbicacionUi.Error).mensaje,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
+                    (estado as? UbicacionUi.Error)?.let {
+                        MensajeError(error = it, onReintentar = { alPulsar() })
                     }
 
                     ListaLugares(
