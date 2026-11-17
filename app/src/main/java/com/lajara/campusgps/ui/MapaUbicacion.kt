@@ -18,12 +18,14 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
+import com.lajara.campusgps.model.Lugar
 
 @Composable
 fun MapaUbicacion(
     estado: UbicacionUi,
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
+    masCercano: Lugar?,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
@@ -85,7 +87,11 @@ fun MapaUbicacion(
                     title = lugar.nombre
                     snippet = lugar.categoria
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = icon.mutate().apply { setTint(Color.rgb(30, 136, 229)) }
+                    icon = icon.mutate().apply {
+                        setTint(
+                            if (lugar.id == masCercano?.id) Color.rgb(52, 168, 83) else Color.rgb(30, 136, 229)
+                        )
+                    }
                 }
                 vista.overlays.add(marcadorLugar)
                 if (lugar.id == seleccionado) marcadorElegido = marcadorLugar

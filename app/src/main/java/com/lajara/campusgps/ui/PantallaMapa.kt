@@ -21,6 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lajara.campusgps.model.UbicacionUi
+import com.lajara.campusgps.util.formatearDistancia
 import com.lajara.campusgps.viewmodel.CampusViewModelFactory
 import com.lajara.campusgps.viewmodel.MapaViewModel
 
@@ -50,6 +52,7 @@ fun PantallaMapa(
     val estado by vm.estado.collectAsState()
     val lugares by vm.lugares.collectAsState()
     val seleccionado by vm.seleccionado.collectAsState()
+    val masCercano by vm.masCercano.collectAsState()
 
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -97,6 +100,7 @@ fun PantallaMapa(
                 estado = estado,
                 lugares = lugares,
                 seleccionado = seleccionado,
+                masCercano = masCercano,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
@@ -111,7 +115,7 @@ fun PantallaMapa(
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
                         onClick = { alPulsar() },
@@ -124,6 +128,24 @@ fun PantallaMapa(
                         )
                         Spacer(Modifier.width(ButtonDefaults.IconSpacing))
                         Text("Obtener mi ubicación")
+                    }
+
+                    OutlinedButton(
+                        onClick = { masCercano?.let { vm.seleccionar(it.id) } },
+                        enabled = masCercano != null
+                    ) {
+                        Text("Ir al más cercano")
+                    }
+
+                    masCercano?.let { lugar ->
+                        val metros = lugares.firstOrNull { it.lugar.id == lugar.id }?.metros
+                        if (metros != null) {
+                            Text(
+                                text = "Más cercano: ${lugar.nombre} (${formatearDistancia(metros)})",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     if (estado is UbicacionUi.Error) {
@@ -144,6 +166,7 @@ fun PantallaMapa(
                     ListaLugares(
                         lugares = lugares,
                         seleccionado = seleccionado,
+                        masCercanoId = masCercano?.id,
                         onClick = { vm.seleccionar(it) },
                         modifier = Modifier
                             .fillMaxWidth()
