@@ -1,15 +1,7 @@
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-}
-
-val localProps = Properties().apply {
-    val archivo = rootProject.file("local.properties")
-    if (archivo.exists()) {
-        archivo.inputStream().use { load(it) }
-    }
 }
 
 android {
@@ -24,7 +16,6 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["MAPS_API_KEY"] = localProps.getProperty("MAPS_API_KEY", "")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -65,7 +56,7 @@ dependencies {
 
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)
-    implementation(libs.maps.compose)
+    implementation(libs.osmdroid.android)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material.icons.core)
 }
