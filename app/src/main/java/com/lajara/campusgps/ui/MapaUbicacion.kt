@@ -59,11 +59,24 @@ fun MapaUbicacion(
         }
     }
 
+    LaunchedEffect(seleccionado) {
+        val lugar = lugares.firstOrNull { it.lugar.id == seleccionado }?.lugar
+        if (lugar != null) {
+            mapa.controller.animateTo(
+                GeoPoint(lugar.latitud, lugar.longitud),
+                17.0,
+                1000L
+            )
+        }
+    }
+
     AndroidView(
         factory = { mapa },
         modifier = modifier,
         update = { vista ->
             vista.overlays.clear()
+
+            var marcadorElegido: Marker? = null
 
             lugares.forEach { item ->
                 val lugar = item.lugar
@@ -75,17 +88,24 @@ fun MapaUbicacion(
                     icon = icon.mutate().apply { setTint(Color.rgb(30, 136, 229)) }
                 }
                 vista.overlays.add(marcadorLugar)
+                if (lugar.id == seleccionado) marcadorElegido = marcadorLugar
             }
 
+            var marcadorPropio: Marker? = null
             if (estado is UbicacionUi.Lista) {
-                val marcadorPropio = Marker(vista).apply {
+                marcadorPropio = Marker(vista).apply {
                     position = GeoPoint(estado.posicion.latitud, estado.posicion.longitud)
                     title = "Estás aquí"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     icon = icon.mutate().apply { setTint(Color.RED) }
                 }
                 vista.overlays.add(marcadorPropio)
-                marcadorPropio.showInfoWindow()
+            }
+
+            if (marcadorElegido != null) {
+                marcadorElegido?.showInfoWindow()
+            } else {
+                marcadorPropio?.showInfoWindow()
             }
 
             vista.invalidate()

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,7 +40,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lajara.campusgps.model.UbicacionUi
 import com.lajara.campusgps.viewmodel.CampusViewModelFactory
 import com.lajara.campusgps.viewmodel.MapaViewModel
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,32 +126,29 @@ fun PantallaMapa(
                         Text("Obtener mi ubicación")
                     }
 
-                    when (val e = estado) {
-                        is UbicacionUi.Inicial -> Text(
-                            text = "Pulsa el botón para empezar",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        is UbicacionUi.Lista -> Text(
-                            text = "Latitud: ${String.format(Locale.US, "%.4f", e.posicion.latitud)}\n" +
-                                    "Longitud: ${String.format(Locale.US, "%.4f", e.posicion.longitud)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
-                        )
-                        is UbicacionUi.Error -> Surface(
+                    if (estado is UbicacionUi.Error) {
+                        Surface(
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.errorContainer,
                             shape = MaterialTheme.shapes.medium
                         ) {
                             Text(
-                                text = e.mensaje,
+                                text = (estado as UbicacionUi.Error).mensaje,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
-                        is UbicacionUi.Buscando -> {}
                     }
+
+                    ListaLugares(
+                        lugares = lugares,
+                        seleccionado = seleccionado,
+                        onClick = { vm.seleccionar(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                    )
                 }
             }
         }

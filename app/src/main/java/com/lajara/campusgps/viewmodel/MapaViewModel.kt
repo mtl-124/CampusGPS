@@ -45,7 +45,9 @@ class MapaViewModel(
     fun permisoDenegado() {
         _estado.value = UbicacionUi.Error("Sin permiso de ubicación no puedo mostrar dónde estás")
     }
-
+    fun seleccionar(id: Int?) {
+        _seleccionado.value = id
+    }
     private fun actualizarDistancias(pos: Posicion) {
         _lugares.value = lugaresRepo.obtenerLugares()
             .map { LugarConDistancia(it, distanciaMetros(pos, it)) }
