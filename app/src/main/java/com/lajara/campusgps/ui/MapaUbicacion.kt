@@ -113,7 +113,7 @@ fun MapaUbicacion(
                     title = lugar.nombre
                     snippet = lugar.categoria
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = icon.mutate().apply {
+                    icon = icon?.constantState?.newDrawable()?.mutate()?.apply {
                         setTint(
                             if (lugar.id == masCercano?.id) Color.rgb(52, 168, 83) else Color.rgb(30, 136, 229)
                         )
@@ -130,7 +130,7 @@ fun MapaUbicacion(
                     title = "Estás aquí"
                     snippet = formatearCoordenadas(est.posicion.latitud, est.posicion.longitud)
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = icon.mutate().apply { setTint(Color.RED) }
+                    icon = icon?.constantState?.newDrawable()?.mutate()?.apply { setTint(Color.RED) }
                 }
                 vista.overlays.add(marcadorPropio)
             }

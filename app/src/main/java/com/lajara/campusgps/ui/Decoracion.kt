@@ -1,6 +1,7 @@
 package com.lajara.campusgps.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,6 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.lajara.campusgps.ui.theme.Naranja
 import com.lajara.campusgps.ui.theme.Turquesa
 import com.lajara.campusgps.ui.theme.VerdeOscuro
@@ -269,7 +270,6 @@ fun Ilustracion(modifier: Modifier = Modifier) {
 
         // Rayitos alrededor del pin
         val rayColor = Naranja
-        val strokeRay = Stroke(width = 2.dp.toPx())
         drawLine(rayColor, Offset(pinCx - pinR * 1.4f, pinCy - pinR * 0.8f), Offset(pinCx - pinR * 1.0f, pinCy - pinR * 0.5f), 2.dp.toPx())
         drawLine(rayColor, Offset(pinCx - pinR * 1.6f, pinCy - pinR * 0.2f), Offset(pinCx - pinR * 1.1f, pinCy - pinR * 0.2f), 2.dp.toPx())
         drawLine(rayColor, Offset(pinCx - pinR * 1.3f, pinCy + pinR * 0.3f), Offset(pinCx - pinR * 0.9f, pinCy + pinR * 0.1f), 2.dp.toPx())
@@ -279,7 +279,12 @@ fun Ilustracion(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarraCampus() {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(VerdeOscuro)
+            .zIndex(1f)
+    ) {
         TopAppBar(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {

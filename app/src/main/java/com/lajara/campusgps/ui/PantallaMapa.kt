@@ -9,11 +9,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,9 +50,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -179,6 +183,7 @@ fun PantallaMapa(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        .clipToBounds()
                 ) {
                     MapaUbicacion(
                         estado = estado,
@@ -190,72 +195,76 @@ fun PantallaMapa(
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Fila de chips de categoría arriba a la izquierda
-                    LazyRow(
+                    // Controles superiores agrupados en un solo Column (Chips y etiqueta "Siguiendo en vivo")
+                    Column(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(12.dp)
+                            .padding(end = 60.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        item {
-                            val seleccionada = categoriaSeleccionada == null
-                            FilterChip(
-                                selected = seleccionada,
-                                onClick = { vm.filtrarPorCategoria(null) },
-                                label = { Text("Todas") },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = Color.White.copy(alpha = 0.95f),
-                                    labelColor = VerdeOscuro,
-                                    selectedContainerColor = VerdeOscuro,
-                                    selectedLabelColor = Color.White
-                                ),
-                                border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = false,
-                                    borderColor = BordeSuave
-                                ),
-                                elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
-                            )
-                        }
-                        items(categorias) { cat ->
-                            val seleccionada = categoriaSeleccionada == cat
-                            FilterChip(
-                                selected = seleccionada,
-                                onClick = { vm.filtrarPorCategoria(cat) },
-                                label = { Text(cat) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = Color.White.copy(alpha = 0.95f),
-                                    labelColor = VerdeOscuro,
-                                    selectedContainerColor = VerdeOscuro,
-                                    selectedLabelColor = Color.White
-                                ),
-                                border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = false,
-                                    borderColor = BordeSuave
-                                ),
-                                elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
-                            )
-                        }
-                    }
-
-                    // Etiqueta "Siguiendo en vivo" centrada arriba del mapa, debajo de los chips
-                    if (siguiendo) {
-                        Surface(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 16.dp),
-                            color = Naranja,
-                            shape = CircleShape,
-                            shadowElevation = 4.dp
+                        // Fila de chips de categoría
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "Siguiendo en vivo",
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            item {
+                                val seleccionada = categoriaSeleccionada == null
+                                FilterChip(
+                                    selected = seleccionada,
+                                    onClick = { vm.filtrarPorCategoria(null) },
+                                    label = { Text("Todas") },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = Color.White.copy(alpha = 0.95f),
+                                        labelColor = VerdeOscuro,
+                                        selectedContainerColor = VerdeOscuro,
+                                        selectedLabelColor = Color.White
+                                    ),
+                                    border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = false,
+                                        borderColor = BordeSuave
+                                    ),
+                                    elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                                )
+                            }
+                            items(categorias) { cat ->
+                                val seleccionada = categoriaSeleccionada == cat
+                                FilterChip(
+                                    selected = seleccionada,
+                                    onClick = { vm.filtrarPorCategoria(cat) },
+                                    label = { Text(cat) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = Color.White.copy(alpha = 0.95f),
+                                        labelColor = VerdeOscuro,
+                                        selectedContainerColor = VerdeOscuro,
+                                        selectedLabelColor = Color.White
+                                    ),
+                                    border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = false,
+                                        borderColor = BordeSuave
+                                    ),
+                                    elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                                )
+                            }
+                        }
+
+                        // Etiqueta "Siguiendo en vivo" (solo si se está siguiendo)
+                        if (siguiendo) {
+                            Surface(
+                                color = Naranja,
+                                shape = CircleShape,
+                                shadowElevation = 4.dp
+                            ) {
+                                Text(
+                                    text = "Siguiendo en vivo",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
 
@@ -376,9 +385,10 @@ fun PantallaMapa(
                                 onClick = { verificarYEjecutar("buscar") },
                                 enabled = !buscando,
                                 modifier = Modifier
-                                    .weight(1.2f)
-                                    .height(44.dp),
+                                    .weight(1f)
+                                    .heightIn(min = 44.dp),
                                 shape = CircleShape,
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = VerdeOscuro,
                                     contentColor = Color.White,
@@ -395,18 +405,22 @@ fun PantallaMapa(
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = "Buscando...",
-                                        fontSize = 13.sp,
+                                        fontSize = 12.sp,
+                                        lineHeight = 14.sp,
                                         fontWeight = FontWeight.Medium,
-                                        maxLines = 1
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
                                     )
                                 } else {
                                     IconoNavegacion(size = 16.dp, color = Color.White)
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = "Obtener mi ubicación",
-                                        fontSize = 13.sp,
+                                        fontSize = 12.sp,
+                                        lineHeight = 14.sp,
                                         fontWeight = FontWeight.Medium,
-                                        maxLines = 1
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
                                     )
                                 }
                             }
@@ -416,8 +430,9 @@ fun PantallaMapa(
                                 enabled = masCercano != null,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(44.dp),
+                                    .heightIn(min = 44.dp),
                                 shape = CircleShape,
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                                 border = androidx.compose.foundation.BorderStroke(1.5.dp, VerdeOscuro),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = VerdeOscuro
@@ -425,9 +440,11 @@ fun PantallaMapa(
                             ) {
                                 Text(
                                     text = "Ir al más cercano",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.sp,
+                                    lineHeight = 14.sp,
                                     fontWeight = FontWeight.Medium,
-                                    maxLines = 1
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2
                                 )
                             }
                         }
