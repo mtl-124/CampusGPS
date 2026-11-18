@@ -17,11 +17,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lajara.campusgps.model.UbicacionUi
+import com.lajara.campusgps.ui.theme.BordeSuave
 import com.lajara.campusgps.ui.theme.Crema
 import com.lajara.campusgps.ui.theme.VerdeOscuro
 import com.lajara.campusgps.util.formatearDistancia
@@ -55,9 +60,11 @@ fun PantallaMapa(
 ) {
     val contexto = LocalContext.current
     val estado by vm.estado.collectAsState()
-    val lugares by vm.lugares.collectAsState()
+    val lugaresVisibles by vm.lugaresVisibles.collectAsState()
     val seleccionado by vm.seleccionado.collectAsState()
     val masCercano by vm.masCercano.collectAsState()
+    val categoriaSeleccionada by vm.categoriaSeleccionada.collectAsState()
+    val categorias = vm.categorias
 
     var fueronMapa by rememberSaveable { mutableStateOf(false) }
     var centrarToken by rememberSaveable { mutableIntStateOf(0) }
@@ -129,14 +136,63 @@ fun PantallaMapa(
                 ) {
                     MapaUbicacion(
                         estado = estado,
-                        lugares = lugares,
+                        lugares = lugaresVisibles,
                         seleccionado = seleccionado,
                         masCercano = masCercano,
                         centrarToken = centrarToken,
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Botón flotante para centrar en mi ubicación
+                    // Fila de chips de categoría arriba a la izquierda
+                    LazyRow(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            val seleccionada = categoriaSeleccionada == null
+                            FilterChip(
+                                selected = seleccionada,
+                                onClick = { vm.filtrarPorCategoria(null) },
+                                label = { Text("Todas") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = Color.White.copy(alpha = 0.95f),
+                                    labelColor = VerdeOscuro,
+                                    selectedContainerColor = VerdeOscuro,
+                                    selectedLabelColor = Color.White
+                                ),
+                                border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = false,
+                                    borderColor = BordeSuave
+                                ),
+                                elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                            )
+                        }
+                        items(categorias) { cat ->
+                            val seleccionada = categoriaSeleccionada == cat
+                            FilterChip(
+                                selected = seleccionada,
+                                onClick = { vm.filtrarPorCategoria(cat) },
+                                label = { Text(cat) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = Color.White.copy(alpha = 0.95f),
+                                    labelColor = VerdeOscuro,
+                                    selectedContainerColor = VerdeOscuro,
+                                    selectedLabelColor = Color.White
+                                ),
+                                border = if (seleccionada) null else FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = false,
+                                    borderColor = BordeSuave
+                                ),
+                                elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                            )
+                        }
+                    }
+
+                    // Botón flotante para centrar en mi ubicación (abajo a la derecha)
                     Surface(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -240,7 +296,7 @@ fun PantallaMapa(
                         }
 
                         masCercano?.let { lugar ->
-                            val metros = lugares.firstOrNull { it.lugar.id == lugar.id }?.metros
+                            val metros = lugaresVisibles.firstOrNull { it.lugar.id == lugar.id }?.metros
                             if (metros != null) {
                                 Spacer(Modifier.height(8.dp))
                                 Text(
@@ -255,7 +311,7 @@ fun PantallaMapa(
                         Spacer(Modifier.height(8.dp))
 
                         ListaLugares(
-                            lugares = lugares,
+                            lugares = lugaresVisibles,
                             seleccionado = seleccionado,
                             masCercanoId = masCercano?.id,
                             onClick = { vm.seleccionar(it) },
