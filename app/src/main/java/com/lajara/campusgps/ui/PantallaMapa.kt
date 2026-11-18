@@ -24,9 +24,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,11 +53,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lajara.campusgps.model.UbicacionUi
 import com.lajara.campusgps.ui.theme.BordeSuave
 import com.lajara.campusgps.ui.theme.Crema
+import com.lajara.campusgps.ui.theme.TurquesaClaro
 import com.lajara.campusgps.ui.theme.VerdeOscuro
 import com.lajara.campusgps.util.formatearDistancia
 import com.lajara.campusgps.viewmodel.CampusViewModelFactory
 import com.lajara.campusgps.viewmodel.MapaViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMapa(
     vm: MapaViewModel = viewModel(factory = CampusViewModelFactory(LocalContext.current))
@@ -64,6 +70,8 @@ fun PantallaMapa(
     val seleccionado by vm.seleccionado.collectAsState()
     val masCercano by vm.masCercano.collectAsState()
     val categoriaSeleccionada by vm.categoriaSeleccionada.collectAsState()
+    val radioSeleccionado by vm.radioSeleccionado.collectAsState()
+    val idsEnRadio by vm.idsEnRadio.collectAsState()
     val categorias = vm.categorias
 
     var fueronMapa by rememberSaveable { mutableStateOf(false) }
@@ -140,6 +148,7 @@ fun PantallaMapa(
                         seleccionado = seleccionado,
                         masCercano = masCercano,
                         centrarToken = centrarToken,
+                        radio = radioSeleccionado,
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -229,7 +238,38 @@ fun PantallaMapa(
                                 .background(Color(0xFFC9D6D8), CircleShape)
                         )
 
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(8.dp))
+
+                        // Selector de Radio (Segmented Button Row)
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(36.dp)
+                        ) {
+                            val opciones = listOf(100, 200, 500)
+                            opciones.forEachIndexed { index, metros ->
+                                val seleccionadoBtn = radioSeleccionado == metros
+                                SegmentedButton(
+                                    selected = seleccionadoBtn,
+                                    onClick = { vm.elegirRadio(metros) },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = opciones.size),
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = TurquesaClaro,
+                                        activeContentColor = VerdeOscuro,
+                                        inactiveContainerColor = Color.White,
+                                        inactiveContentColor = VerdeOscuro
+                                    )
+                                ) {
+                                    Text(
+                                        text = "$metros m",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -298,7 +338,7 @@ fun PantallaMapa(
                         masCercano?.let { lugar ->
                             val metros = lugaresVisibles.firstOrNull { it.lugar.id == lugar.id }?.metros
                             if (metros != null) {
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(6.dp))
                                 Text(
                                     text = "Más cercano: ${lugar.nombre} (${formatearDistancia(metros)})",
                                     fontSize = 14.sp,
@@ -308,16 +348,17 @@ fun PantallaMapa(
                             }
                         }
 
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(6.dp))
 
                         ListaLugares(
                             lugares = lugaresVisibles,
                             seleccionado = seleccionado,
                             masCercanoId = masCercano?.id,
+                            idsEnRadio = idsEnRadio,
                             onClick = { vm.seleccionar(it) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
+                                .height(160.dp)
                         )
                     }
                 }

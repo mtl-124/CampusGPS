@@ -21,6 +21,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import java.io.File
 
 @Composable
@@ -30,6 +31,7 @@ fun MapaUbicacion(
     seleccionado: Int?,
     masCercano: Lugar?,
     centrarToken: Int,
+    radio: Int?,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
@@ -84,6 +86,20 @@ fun MapaUbicacion(
         update = { vista ->
             vista.overlays.clear()
 
+            // 1. Dibujar círculo de radio si aplica y hay ubicación (antes que los marcadores)
+            val rad = radio
+            val est = estadoActual
+            if (est is UbicacionUi.Lista && rad != null) {
+                val circulo = Polygon().apply {
+                    val puntos = Polygon.pointsAsCircle(GeoPoint(est.posicion.latitud, est.posicion.longitud), rad.toDouble())
+                    setPoints(puntos)
+                    setFillColor(Color.argb(40, 31, 162, 166)) // Turquesa con alfa ~40/255
+                    setStrokeColor(Color.rgb(31, 162, 166)) // Turquesa
+                    setStrokeWidth(4f)
+                }
+                vista.overlays.add(circulo)
+            }
+
             var marcadorElegido: Marker? = null
 
             lugares.forEach { item ->
@@ -104,7 +120,6 @@ fun MapaUbicacion(
             }
 
             var marcadorPropio: Marker? = null
-            val est = estadoActual
             if (est is UbicacionUi.Lista) {
                 marcadorPropio = Marker(vista).apply {
                     position = GeoPoint(est.posicion.latitud, est.posicion.longitud)

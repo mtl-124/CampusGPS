@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +42,7 @@ fun ListaLugares(
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
     masCercanoId: Int?,
+    idsEnRadio: Set<Int>,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -49,6 +52,8 @@ fun ListaLugares(
     ) {
         items(lugares, key = { it.lugar.id }) { item ->
             val elegido = item.lugar.id == seleccionado
+            val enRadio = item.lugar.id in idsEnRadio
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,6 +97,21 @@ fun ListaLugares(
                             fontSize = 12.sp,
                             color = TextoSecundario
                         )
+                        if (enRadio) {
+                            Spacer(Modifier.height(2.dp))
+                            Surface(
+                                color = TurquesaClaro,
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = "En radio",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = VerdeOscuro
+                                )
+                            }
+                        }
                     }
                     Text(
                         text = item.metros?.let { formatearDistancia(it) } ?: "Sin calcular",
