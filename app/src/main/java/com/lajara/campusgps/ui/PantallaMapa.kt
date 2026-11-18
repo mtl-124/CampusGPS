@@ -192,6 +192,7 @@ fun PantallaMapa(
                         masCercano = masCercano,
                         centrarToken = centrarToken,
                         radio = radioSeleccionado,
+                        siguiendo = siguiendo,
                         modifier = Modifier.fillMaxSize()
                     )
 

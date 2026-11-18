@@ -61,8 +61,9 @@ class UbicacionRepositoryGoogle(private val context: Context) : UbicacionReposit
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
-                    // 1. Filtrar por precisión: si no tiene precisión o accuracy > 25f, descartar
-                    if (!location.hasAccuracy() || location.accuracy > 25f) {
+                    // 1. Filtrar por precisión: solo descarta si informa una precisión peor a 50 m
+                    //    (el emulador a veces no informa precisión; no debe bloquear todo)
+                    if (location.hasAccuracy() && location.accuracy > 50f) {
                         return
                     }
 

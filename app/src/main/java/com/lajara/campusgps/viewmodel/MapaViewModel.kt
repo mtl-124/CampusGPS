@@ -214,18 +214,18 @@ class MapaViewModel(
     }
 
     // Filtrar por categoría
+    // Filtrar por categoría
     fun filtrarPorCategoria(categoria: String?) {
         _categoria.value = categoria
 
-        val visibleActual = _lugaresVisibles.value
-
-        if (
-            _seleccionado.value != null &&
-            visibleActual.none {
-                it.lugar.id == _seleccionado.value
+        // Se calcula con la categoría nueva y _lugares (no con el stateIn, que
+        // todavía no se actualizó en este instante).
+        val idSeleccionado = _seleccionado.value
+        if (idSeleccionado != null && categoria != null) {
+            val sigueVisible = _lugares.value.any {
+                it.lugar.id == idSeleccionado && it.lugar.categoria == categoria
             }
-        ) {
-            _seleccionado.value = null
+            if (!sigueVisible) _seleccionado.value = null
         }
     }
 

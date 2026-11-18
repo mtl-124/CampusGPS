@@ -33,6 +33,7 @@ fun MapaUbicacion(
     masCercano: Lugar?,
     centrarToken: Int,
     radio: Int?,
+    siguiendo: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
@@ -70,6 +71,14 @@ fun MapaUbicacion(
                 16.0,
                 1000L
             )
+        }
+    }
+
+    // Seguimiento en vivo: la cámara acompaña cada nueva posición (sin cambiar el zoom)
+    LaunchedEffect(estado) {
+        val est = estado
+        if (siguiendo && est is UbicacionUi.Lista) {
+            mapa.controller.animateTo(GeoPoint(est.posicion.latitud, est.posicion.longitud))
         }
     }
 
