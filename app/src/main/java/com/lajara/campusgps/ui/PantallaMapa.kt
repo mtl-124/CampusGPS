@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,12 +22,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -34,6 +38,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,10 +54,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lajara.campusgps.model.UbicacionUi
 import com.lajara.campusgps.ui.theme.BordeSuave
 import com.lajara.campusgps.ui.theme.Crema
+import com.lajara.campusgps.ui.theme.Naranja
 import com.lajara.campusgps.ui.theme.TurquesaClaro
 import com.lajara.campusgps.ui.theme.VerdeOscuro
 import com.lajara.campusgps.util.formatearDistancia
@@ -72,10 +81,26 @@ fun PantallaMapa(
     val categoriaSeleccionada by vm.categoriaSeleccionada.collectAsState()
     val radioSeleccionado by vm.radioSeleccionado.collectAsState()
     val idsEnRadio by vm.idsEnRadio.collectAsState()
+    val siguiendo by vm.siguiendo.collectAsState()
     val categorias = vm.categorias
 
     var fueronMapa by rememberSaveable { mutableStateOf(false) }
     var centrarToken by rememberSaveable { mutableIntStateOf(0) }
+    var accionPendiente by rememberSaveable { mutableStateOf("buscar") }
+
+    // Detener seguimiento cuando la app deja de estar visible (ON_STOP)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                vm.detenerSeguimiento()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(estado) {
         when (estado) {
@@ -94,10 +119,19 @@ fun PantallaMapa(
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { resultado ->
-        if (resultado.values.any { it }) vm.buscar() else vm.permisoDenegado()
+        if (resultado.values.any { it }) {
+            if (accionPendiente == "iniciar") {
+                vm.iniciarSeguimiento()
+            } else {
+                vm.buscar()
+            }
+        } else {
+            vm.permisoDenegado()
+        }
     }
 
-    val alPulsar: () -> Unit = {
+    val verificarYEjecutar: (String) -> Unit = { accion ->
+        accionPendiente = accion
         val fine = ContextCompat.checkSelfPermission(
             contexto, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
@@ -106,8 +140,12 @@ fun PantallaMapa(
         ) == PackageManager.PERMISSION_GRANTED
 
         if (fine || coarse) {
-            centrarToken++
-            vm.buscar()
+            if (accion == "iniciar") {
+                vm.iniciarSeguimiento()
+            } else {
+                centrarToken++
+                vm.buscar()
+            }
         } else {
             lanzador.launch(
                 arrayOf(
@@ -121,8 +159,8 @@ fun PantallaMapa(
     if (!fueronMapa) {
         PantallaInicio(
             estado = estado,
-            onObtenerUbicacion = alPulsar,
-            onReintentar = alPulsar
+            onObtenerUbicacion = { verificarYEjecutar("buscar") },
+            onReintentar = { verificarYEjecutar("buscar") }
         )
     } else {
         val buscando = estado is UbicacionUi.Buscando
@@ -201,19 +239,78 @@ fun PantallaMapa(
                         }
                     }
 
-                    // Botón flotante para centrar en mi ubicación (abajo a la derecha)
-                    Surface(
+                    // Etiqueta "Siguiendo en vivo" centrada arriba del mapa, debajo de los chips
+                    if (siguiendo) {
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = 16.dp),
+                            color = Naranja,
+                            shape = CircleShape,
+                            shadowElevation = 4.dp
+                        ) {
+                            Text(
+                                text = "Siguiendo en vivo",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Botones flotantes en la columna derecha del mapa (Seguimiento y Centrar)
+                    Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp)
-                            .size(48.dp),
-                        shape = CircleShape,
-                        color = Color.White,
-                        shadowElevation = 6.dp,
-                        onClick = { centrarToken++ }
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            IconoMira(size = 24.dp, color = VerdeOscuro)
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Botón de seguimiento Iniciar / Detener
+                            Surface(
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                color = if (siguiendo) Naranja else VerdeOscuro,
+                                shadowElevation = 6.dp,
+                                onClick = {
+                                    if (siguiendo) {
+                                        vm.detenerSeguimiento()
+                                    } else {
+                                        verificarYEjecutar("iniciar")
+                                    }
+                                }
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (siguiendo) {
+                                        Canvas(modifier = Modifier.size(16.dp)) {
+                                            drawRect(color = Color.White)
+                                        }
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "Iniciar seguimiento",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Botón para centrar en mi ubicación
+                            Surface(
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                color = Color.White,
+                                shadowElevation = 6.dp,
+                                onClick = { centrarToken++ }
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    IconoMira(size = 24.dp, color = VerdeOscuro)
+                                }
+                            }
                         }
                     }
                 }
@@ -276,7 +373,7 @@ fun PantallaMapa(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Button(
-                                onClick = alPulsar,
+                                onClick = { verificarYEjecutar("buscar") },
                                 enabled = !buscando,
                                 modifier = Modifier
                                     .weight(1.2f)

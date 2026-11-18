@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -36,6 +37,9 @@ fun MapaUbicacion(
 ) {
     val contexto = LocalContext.current
     val estadoActual by rememberUpdatedState(estado)
+
+    val prevSeleccionado = remember { mutableStateOf<Int?>(null) }
+    val wasLista = remember { mutableStateOf(false) }
 
     val mapa = remember {
         Configuration.getInstance().apply {
@@ -131,11 +135,19 @@ fun MapaUbicacion(
                 vista.overlays.add(marcadorPropio)
             }
 
-            if (marcadorElegido != null) {
-                marcadorElegido?.showInfoWindow()
-            } else {
-                marcadorPropio?.showInfoWindow()
+            // Solo mostrar ventana de información si cambió la selección o es la primera vez que entra a Lista
+            val seleccionCambio = seleccionado != prevSeleccionado.value
+            val ingresoListaPorPrimeraVez = est is UbicacionUi.Lista && !wasLista.value
+
+            if (seleccionCambio || ingresoListaPorPrimeraVez) {
+                if (marcadorElegido != null) {
+                    marcadorElegido?.showInfoWindow()
+                } else if (ingresoListaPorPrimeraVez) {
+                    marcadorPropio?.showInfoWindow()
+                }
+                prevSeleccionado.value = seleccionado
             }
+            wasLista.value = est is UbicacionUi.Lista
 
             vista.invalidate()
         },
