@@ -3,19 +3,28 @@ package com.lajara.campusgps.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
-private val EsquemaClaro = lightColorScheme(
-    primary = AzulCampus,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD3E5F5),
-    onPrimaryContainer = Color(0xFF0B2F4A)
+private val LightColorScheme = lightColorScheme(
+    primary = VerdeOscuro,
+    onPrimary = Blanco,
+    secondary = Turquesa,
+    tertiary = Naranja,
+    background = Crema,
+    surface = Blanco,
+    onSurface = VerdeOscuro,
+    onSurfaceVariant = TextoSecundario,
+    primaryContainer = TurquesaClaro,
+    onPrimaryContainer = VerdeOscuro,
+    errorContainer = ErrorFondo,
+    onErrorContainer = ErrorTexto
 )
 
 @Composable
-fun CampusGPSTheme(content: @Composable () -> Unit) {
+fun CampusGPSTheme(
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
-        colorScheme = EsquemaClaro,
+        colorScheme = LightColorScheme,
         typography = Typography,
         content = content
     )

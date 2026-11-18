@@ -5,12 +5,16 @@ import android.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import com.lajara.campusgps.model.Lugar
 import com.lajara.campusgps.model.LugarConDistancia
 import com.lajara.campusgps.model.UbicacionUi
+import com.lajara.campusgps.util.formatearCoordenadas
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -18,7 +22,6 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
-import com.lajara.campusgps.model.Lugar
 
 @Composable
 fun MapaUbicacion(
@@ -26,9 +29,11 @@ fun MapaUbicacion(
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
     masCercano: Lugar?,
+    centrarToken: Int,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
+    val estadoActual by rememberUpdatedState(estado)
 
     val mapa = remember {
         Configuration.getInstance().apply {
@@ -51,10 +56,11 @@ fun MapaUbicacion(
         onDispose { mapa.onPause() }
     }
 
-    LaunchedEffect(estado) {
-        if (estado is UbicacionUi.Lista) {
+    LaunchedEffect(centrarToken, estado is UbicacionUi.Lista) {
+        val est = estadoActual
+        if (est is UbicacionUi.Lista) {
             mapa.controller.animateTo(
-                GeoPoint(estado.posicion.latitud, estado.posicion.longitud),
+                GeoPoint(est.posicion.latitud, est.posicion.longitud),
                 16.0,
                 1000L
             )
@@ -98,10 +104,12 @@ fun MapaUbicacion(
             }
 
             var marcadorPropio: Marker? = null
-            if (estado is UbicacionUi.Lista) {
+            val est = estadoActual
+            if (est is UbicacionUi.Lista) {
                 marcadorPropio = Marker(vista).apply {
-                    position = GeoPoint(estado.posicion.latitud, estado.posicion.longitud)
+                    position = GeoPoint(est.posicion.latitud, est.posicion.longitud)
                     title = "Estás aquí"
+                    snippet = formatearCoordenadas(est.posicion.latitud, est.posicion.longitud)
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     icon = icon.mutate().apply { setTint(Color.RED) }
                 }

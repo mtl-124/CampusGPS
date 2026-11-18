@@ -15,17 +15,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.lajara.campusgps.model.LugarConDistancia
+import com.lajara.campusgps.ui.theme.AzulLugar
+import com.lajara.campusgps.ui.theme.BordeSuave
+import com.lajara.campusgps.ui.theme.Turquesa
+import com.lajara.campusgps.ui.theme.TurquesaClaro
+import com.lajara.campusgps.ui.theme.TextoSecundario
+import com.lajara.campusgps.ui.theme.VerdeCercano
+import com.lajara.campusgps.ui.theme.VerdeOscuro
 import com.lajara.campusgps.util.formatearDistancia
 
 @Composable
@@ -38,7 +45,7 @@ fun ListaLugares(
 ) {
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(lugares, key = { it.lugar.id }) { item ->
             val elegido = item.lugar.id == seleccionado
@@ -46,17 +53,18 @@ fun ListaLugares(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onClick(item.lugar.id) },
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (elegido) {
-                        MaterialTheme.colorScheme.primaryContainer
+                        TurquesaClaro
                     } else {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        androidx.compose.ui.graphics.Color.White
                     }
                 ),
                 border = if (elegido) {
-                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                    BorderStroke(2.dp, Turquesa)
                 } else {
-                    null
+                    BorderStroke(1.dp, BordeSuave)
                 }
             ) {
                 Row(
@@ -65,29 +73,31 @@ fun ListaLugares(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(12.dp)
                             .background(
-                            if (item.lugar.id == masCercanoId) Color(0xFF34A853) else Color(0xFF1E88E5),
-                            CircleShape
-                        )
+                                if (item.lugar.id == masCercanoId) VerdeCercano else AzulLugar,
+                                CircleShape
+                            )
                     )
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = item.lugar.nombre,
                             fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge
+                            fontSize = 16.sp,
+                            color = VerdeOscuro
                         )
                         Text(
                             text = item.lugar.categoria,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontSize = 12.sp,
+                            color = TextoSecundario
                         )
                     }
                     Text(
                         text = item.metros?.let { formatearDistancia(it) } ?: "Sin calcular",
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium
+                        fontSize = 16.sp,
+                        color = VerdeOscuro
                     )
                 }
             }

@@ -1,6 +1,5 @@
 package com.lajara.campusgps.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lajara.campusgps.data.LugaresRepository
@@ -73,7 +72,6 @@ class MapaViewModel(
         _lugares.value = lugaresRepo.obtenerLugares()
             .map { LugarConDistancia(it, distanciaMetros(pos, it)) }
             .sortedBy { it.metros }
-        _lugares.value.forEach { Log.d("CampusGPS", "${it.lugar.nombre}: ${it.metros} m") }
     }
 
     private fun errorDe(e: Throwable): UbicacionUi.Error = when (e) {

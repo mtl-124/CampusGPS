@@ -8,3 +8,6 @@ fun formatearDistancia(metros: Float): String =
     } else {
         String.format(Locale.US, "%.1f km", metros / 1000f)
     }
+
+fun formatearCoordenadas(latitud: Double, longitud: Double): String =
+    String.format(Locale.US, "Lat %.4f · Lon %.4f", latitud, longitud)
