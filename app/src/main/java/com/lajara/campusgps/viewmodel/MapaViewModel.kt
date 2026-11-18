@@ -1,3 +1,4 @@
+
 package com.lajara.campusgps.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -26,57 +27,111 @@ class MapaViewModel(
     private val lugaresRepo: LugaresRepository
 ) : ViewModel() {
 
-    private val _estado = MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
+    // Estado general de la ubicación
+    private val _estado =
+        MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
+
     val estado: StateFlow<UbicacionUi> = _estado.asStateFlow()
 
+    // Lista de lugares
     private val _lugares = MutableStateFlow(
-        lugaresRepo.obtenerLugares().map { LugarConDistancia(it, null) }
+        lugaresRepo.obtenerLugares().map {
+            LugarConDistancia(it, null)
+        }
     )
-    val lugares: StateFlow<List<LugarConDistancia>> = _lugares.asStateFlow()
 
+    val lugares: StateFlow<List<LugarConDistancia>> =
+        _lugares.asStateFlow()
+
+    // Filtro por categoría
     private val _categoria = MutableStateFlow<String?>(null)
-    val categoriaSeleccionada: StateFlow<String?> = _categoria.asStateFlow()
 
+    val categoriaSeleccionada: StateFlow<String?> =
+        _categoria.asStateFlow()
+
+    // Radio de búsqueda
     private val _radio = MutableStateFlow<Int?>(null)
-    val radioSeleccionado: StateFlow<Int?> = _radio.asStateFlow()
 
+    val radioSeleccionado: StateFlow<Int?> =
+        _radio.asStateFlow()
+
+    // Seguimiento en vivo
     private val _siguiendo = MutableStateFlow(false)
-    val siguiendo: StateFlow<Boolean> = _siguiendo.asStateFlow()
+
+    val siguiendo: StateFlow<Boolean> =
+        _siguiendo.asStateFlow()
+
     private var jobSeguimiento: Job? = null
 
-    val categorias: List<String> = lugaresRepo.obtenerLugares()
-        .map { it.categoria }
-        .distinct()
+    // Categorías disponibles
+    val categorias: List<String> =
+        lugaresRepo.obtenerLugares()
+            .map { it.categoria }
+            .distinct()
 
-    val lugaresVisibles: StateFlow<List<LugarConDistancia>> = combine(_lugares, _categoria) { lista, cat ->
-        if (cat == null) lista else lista.filter { it.lugar.categoria == cat }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        lugaresRepo.obtenerLugares().map { LugarConDistancia(it, null) }
-    )
+    // Lugares visibles según la categoría seleccionada
+    private val _lugaresVisibles: StateFlow<List<LugarConDistancia>> =
+        combine(_lugares, _categoria) { lista, categoria ->
+            if (categoria == null) {
+                lista
+            } else {
+                lista.filter {
+                    it.lugar.categoria == categoria
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = lugaresRepo.obtenerLugares().map {
+                LugarConDistancia(it, null)
+            }
+        )
 
-    val idsEnRadio: StateFlow<Set<Int>> = combine(lugaresVisibles, _radio) { lista, rad ->
-        if (rad == null) {
-            emptySet()
-        } else {
-            lista.filter { it.metros != null && it.metros <= rad }.map { it.lugar.id }.toSet()
-        }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        emptySet()
-    )
+    val lugaresVisibles: StateFlow<List<LugarConDistancia>> =
+        _lugaresVisibles
 
+    // Lugares dentro del radio seleccionado
+    val idsEnRadio: StateFlow<Set<Int>> =
+        combine(_lugaresVisibles, _radio) { lista, radio ->
+            if (radio == null) {
+                emptySet()
+            } else {
+                lista.filter {
+                    it.metros != null && it.metros <= radio
+                }.map {
+                    it.lugar.id
+                }.toSet()
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptySet()
+        )
+
+    // Lugar seleccionado
     private val _seleccionado = MutableStateFlow<Int?>(null)
-    val seleccionado: StateFlow<Int?> = _seleccionado.asStateFlow()
 
-    val masCercano: StateFlow<Lugar?> = lugaresVisibles
-        .map { lista -> lista.firstOrNull { it.metros != null }?.lugar }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val seleccionado: StateFlow<Int?> =
+        _seleccionado.asStateFlow()
 
+    // Lugar más cercano
+    val masCercano: StateFlow<Lugar?> =
+        _lugaresVisibles
+            .map { lista ->
+                lista.firstOrNull {
+                    it.metros != null
+                }?.lugar
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = null
+            )
+
+    // Buscar ubicación actual
     fun buscar() {
         detenerSeguimiento()
+
         if (!ubicacionRepo.playServicesDisponible()) {
             _estado.value = UbicacionUi.Error(
                 "Este dispositivo no tiene Google Play Services",
@@ -84,17 +139,22 @@ class MapaViewModel(
             )
             return
         }
+
         _estado.value = UbicacionUi.Buscando
+
         viewModelScope.launch {
             ubicacionRepo.obtenerPosicion()
-                .onSuccess {
-                    _estado.value = UbicacionUi.Lista(it)
-                    actualizarDistancias(it)
+                .onSuccess { posicion ->
+                    _estado.value = UbicacionUi.Lista(posicion)
+                    actualizarDistancias(posicion)
                 }
-                .onFailure { _estado.value = errorDe(it) }
+                .onFailure { error ->
+                    _estado.value = errorDe(error)
+                }
         }
     }
 
+    // Iniciar seguimiento en vivo
     fun iniciarSeguimiento() {
         if (!ubicacionRepo.playServicesDisponible()) {
             _estado.value = UbicacionUi.Error(
@@ -103,28 +163,33 @@ class MapaViewModel(
             )
             return
         }
+
         detenerSeguimiento()
+
         _estado.value = UbicacionUi.Buscando
         _siguiendo.value = true
+
         jobSeguimiento = viewModelScope.launch {
             ubicacionRepo.ubicacionEnVivo()
-                .catch { e ->
-                    _estado.value = errorDe(e)
+                .catch { error ->
+                    _estado.value = errorDe(error)
                     _siguiendo.value = false
                 }
-                .collect { pos ->
-                    _estado.value = UbicacionUi.Lista(pos)
-                    actualizarDistancias(pos)
+                .collect { posicion ->
+                    _estado.value = UbicacionUi.Lista(posicion)
+                    actualizarDistancias(posicion)
                 }
         }
     }
 
+    // Detener seguimiento
     fun detenerSeguimiento() {
         jobSeguimiento?.cancel()
         jobSeguimiento = null
         _siguiendo.value = false
     }
 
+    // Alternar seguimiento
     fun alternarSeguimiento() {
         if (_siguiendo.value) {
             detenerSeguimiento()
@@ -133,44 +198,67 @@ class MapaViewModel(
         }
     }
 
+    // Cuando se deniega el permiso
     fun permisoDenegado() {
         detenerSeguimiento()
+
         _estado.value = UbicacionUi.Error(
             "Sin permiso de ubicación no puedo mostrar dónde estás",
             TipoError.SIN_PERMISO
         )
     }
 
+    // Seleccionar un lugar
     fun seleccionar(id: Int?) {
         _seleccionado.value = id
     }
 
+    // Filtrar por categoría
     fun filtrarPorCategoria(categoria: String?) {
         _categoria.value = categoria
-        val visibleActual = lugaresVisibles.value
-        if (_seleccionado.value != null && visibleActual.none { it.lugar.id == _seleccionado.value }) {
+
+        val visibleActual = _lugaresVisibles.value
+
+        if (
+            _seleccionado.value != null &&
+            visibleActual.none {
+                it.lugar.id == _seleccionado.value
+            }
+        ) {
             _seleccionado.value = null
         }
     }
 
+    // Elegir radio de búsqueda
     fun elegirRadio(metros: Int?) {
-        _radio.value = if (_radio.value == metros) null else metros
+        _radio.value =
+            if (_radio.value == metros) null else metros
     }
 
-    private fun actualizarDistancias(pos: Posicion) {
+    // Actualizar distancias de los lugares
+    private fun actualizarDistancias(posicion: Posicion) {
         _lugares.value = lugaresRepo.obtenerLugares()
-            .map { LugarConDistancia(it, distanciaMetros(pos, it)) }
+            .map { lugar ->
+                LugarConDistancia(
+                    lugar,
+                    distanciaMetros(posicion, lugar)
+                )
+            }
             .sortedBy { it.metros }
     }
 
-    private fun errorDe(e: Throwable): UbicacionUi.Error = when (e) {
-        is SecurityException -> UbicacionUi.Error(
-            "Falta el permiso de ubicación",
-            TipoError.SIN_PERMISO
-        )
-        else -> UbicacionUi.Error(
-            "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
-            TipoError.GPS_APAGADO
-        )
+    // Manejar errores
+    private fun errorDe(error: Throwable): UbicacionUi.Error {
+        return when (error) {
+            is SecurityException -> UbicacionUi.Error(
+                "Falta el permiso de ubicación",
+                TipoError.SIN_PERMISO
+            )
+
+            else -> UbicacionUi.Error(
+                "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
+                TipoError.GPS_APAGADO
+            )
+        }
     }
 }

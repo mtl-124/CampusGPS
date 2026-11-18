@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -276,6 +274,7 @@ fun Ilustracion(modifier: Modifier = Modifier) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarraCampus() {
@@ -294,21 +293,14 @@ fun BarraCampus() {
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
+
                     Spacer(Modifier.width(8.dp))
+
                     Text(
                         text = "CampusGPS",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-            actions = {
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = null,
-                        tint = Color.White
                     )
                 }
             },

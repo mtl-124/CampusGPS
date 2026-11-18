@@ -2,6 +2,7 @@ package com.lajara.campusgps.data
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Location
 import android.os.Looper
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
@@ -50,13 +51,40 @@ class UbicacionRepositoryGoogle(private val context: Context) : UbicacionReposit
 
     @SuppressLint("MissingPermission")
     override fun ubicacionEnVivo(): Flow<Posicion> = callbackFlow {
+        var ultimaUbicacionAceptada: Location? = null
+
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000L)
             .setMinUpdateIntervalMillis(1000L)
+            .setMinUpdateDistanceMeters(5f)
             .build()
 
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
+                    // 1. Filtrar por precisión: si no tiene precisión o accuracy > 25f, descartar
+                    if (!location.hasAccuracy() || location.accuracy > 25f) {
+                        return
+                    }
+
+                    // 2. Filtrar por saltos imposibles (> 10 m/s respecto a la última aceptada)
+                    val ultima = ultimaUbicacionAceptada
+                    if (ultima != null) {
+                        val distanciaMetros = ultima.distanceTo(location)
+                        val tiempoTranscurridoSeg = (location.time - ultima.time) / 1000.0
+
+                        if (tiempoTranscurridoSeg > 0.0) {
+                            val velocidadCalculada = distanciaMetros / tiempoTranscurridoSeg
+                            if (velocidadCalculada > 10.0) {
+                                // Salto imposible / ruido, descartar
+                                return
+                            }
+                        } else if (distanciaMetros > 1f) {
+                            return
+                        }
+                    }
+
+                    // Aceptar ubicación
+                    ultimaUbicacionAceptada = location
                     trySend(Posicion(location.latitude, location.longitude))
                 }
             }

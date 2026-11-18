@@ -199,8 +199,7 @@ fun PantallaMapa(
                     Column(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(12.dp)
-                            .padding(end = 60.dp),
+                            .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // Fila de chips de categoría
