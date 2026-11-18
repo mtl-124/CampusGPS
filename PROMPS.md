@@ -1,17 +1,6 @@
 # PROMPTS.md · Fase 2 (rama `mejora-ia`)
 
-| # | Prompt que escribí | Qué respondió | Qué cambié o descarté | Por qué |
-|---|---|---|---|---|
-| 1 | «Rediseñar toda la UI con la identidad visual (barra verde azulado, ondas turquesa y naranja, fondo crema), todo con Canvas y tema Material 3» | _resumen_ | _lo que ajustaste_ | Mantener el comportamiento y no agregar imágenes ni dependencias. |
-| 2 | «Agregar un splash en Compose con animación de entrada (alpha y escala) y que no se repita al rotar» | _resumen_ | _…_ | `rememberSaveable` evita repetir el splash al rotar. |
-| 3 | «Filtro por categoría con chips; masCercano y lista derivados de `lugaresVisibles`» | _resumen_ | `filtrarPorCategoria` leía `_lugaresVisibles.value` justo después de cambiar la categoría y obtenía la lista anterior; lo calculé con la categoría nueva y `_lugares`. | Un `stateIn` se actualiza de forma asíncrona. |
-| 4 | «Selector de radio 100/200/500 m con Polygon en osmdroid; `idsEnRadio` en el ViewModel» | _resumen_ | _…_ | Ningún Composable decide qué lugar está dentro del radio (MVVM). |
-| 5 | «Seguimiento en vivo con `callbackFlow`, botón Iniciar/Detener, detener en `ON_STOP`» | _resumen_ | _…_ | `FusedLocationProviderClient` vive solo en el Repository; el ViewModel no sabe del ciclo de vida. |
-| 6 | «Corregir barra superior que se tapa, botones con texto cortado y marcadores todos rojos» | _resumen_ | _…_ | Causas: el MapView dibujaba fuera de sus límites y los marcadores compartían el mismo Drawable al teñirlo. |
-| 7 | «La etiqueta "Siguiendo en vivo" tapa los chips: agrupar controles en un solo Column» | _resumen_ | _…_ | Dos hijos alineados arriba en el mismo Box se superponen. |
-| 8 | «Filtrar ruido GPS en interiores: descartar accuracy > 25 m, sin precisión y saltos a más de 10 m/s» | _resumen_ | Relajé la regla: solo descarto si hay precisión y es peor a 50 m, y acepto lecturas sin precisión. | Con la regla original, el emulador (que a veces no informa precisión) nunca emitía y la app quedaba en «Buscando…». |
-
-## Promppts Completos
+## Prompts Completos
 
 1. **Prompt 1**
 
